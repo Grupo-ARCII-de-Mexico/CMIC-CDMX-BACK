@@ -10,6 +10,7 @@ import { GetUser } from './getuser.decorator';
 import { Roles } from 'src/tools/eventos.enum';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { S3Service } from 'src/tools/s3.service';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('user')
@@ -17,6 +18,7 @@ export class UserController {
 
     constructor(
         private userService: UserService,
+        private s3: S3Service
     ) { }
     @Get('/me')
     @RoleProtected(Roles.ADMIN, Roles.GERENTE, Roles.COLABORADOR, Roles.COLABORADOR)
@@ -26,52 +28,24 @@ export class UserController {
     }
 
     @Post('')
-    @UseInterceptors(FileInterceptor('foto', {
-        fileFilter: function (req, file, cb) {
-
-            cb(null, true)
-        },
-        storage: diskStorage({
-            destination: "./uploads/users",
-            filename: function (req, file, cb) {
-                console.log(file);
-
-                cb(null, Date.now() + '.' + file.mimetype.split('/')[1])
-                // cb(null,file.originalname.split('.')[0]+'_'+Date.now()+'.'+file.originalname.split('.')[1])
-            }
-        })
-
-    }))
-    createUser(@UploadedFile() file: Express.Multer.File, @Body() user: UserDto) {
-        if (file) {
-            user.foto = file.filename;
+    @UseInterceptors(FileInterceptor('foto'))
+   async  createUser(@UploadedFile() archivo: Express.Multer.File, @Body() user: UserDto) {
+        if (archivo) {
+            const { file } = await this.s3.uploadFile(archivo.buffer, 'uploads/users/' + archivo.filename + archivo.mimetype.split('/')[1])
+            user.foto = file;
         }
         return this.userService.createUser(user);
 
     }
 
     @Patch('/')
-    @UseInterceptors(FileInterceptor('foto', {
-        fileFilter: function (req, file, cb) {
-
-            cb(null, true)
-        },
-        storage: diskStorage({
-            destination: "./uploads/users",
-            filename: function (req, file, cb) {
-                console.log(file);
-
-                cb(null, Date.now() + '.' + file.mimetype.split('/')[1])
-                // cb(null,file.originalname.split('.')[0]+'_'+Date.now()+'.'+file.originalname.split('.')[1])
-            }
-        })
-
-    }))
+    @UseInterceptors(FileInterceptor('foto'))
     @RoleProtected(Roles.ADMIN, Roles.GERENTE, Roles.COLABORADOR)
     @UseGuards(AuthGuard(), UserRoleGuard)
-    updateUser(@GetUser() {id}: User, @Body() user: updateUserDto, @UploadedFile() file: Express.Multer.File): Promise<User> {
-        if (file) {
-            user.foto = file.filename;
+    async updateUser(@GetUser() {id}: User, @Body() user: updateUserDto, @UploadedFile() archivo: Express.Multer.File): Promise<User> {
+        if (archivo) {
+            const { file } = await this.s3.uploadFile(archivo.buffer, 'uploads/users/' + archivo.filename + archivo.mimetype.split('/')[1])
+            user.foto = file;
         }
         return this.userService.updateUser(id, user);
 

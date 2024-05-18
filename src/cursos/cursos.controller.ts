@@ -4,31 +4,20 @@ import { CreateCursoDto } from './dto/create-curso.dto';
 import { UpdateCursoDto } from './dto/update-curso.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { S3Service } from 'src/tools/s3.service';
 
 @Controller('cursos')
 export class CursosController {
-  constructor(private readonly cursosService: CursosService) {}
+  constructor(
+    private readonly cursosService: CursosService,
+  private readonly s3:S3Service) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('imagen',{
-    fileFilter: function (req,file,cb){
-
-        cb(null,true)
-    },
-    storage:diskStorage({
-        destination:"./uploads/cursos",
-        filename:function(req,file,cb){
-            console.log(file);
-            
-            cb(null, Date.now() +'.'+ file.mimetype.split('/')[1])
-           // cb(null,file.originalname.split('.')[0]+'_'+Date.now()+'.'+file.originalname.split('.')[1])
-        }
-    })
-
-}))
-  create(@UploadedFile() file: Express.Multer.File,@Body() createCursoDto: CreateCursoDto) {
-    if(file){
-      createCursoDto.imagen=file.filename;
+  @UseInterceptors(FileInterceptor('imagen'))
+  async create(@UploadedFile() archivo: Express.Multer.File,@Body() createCursoDto: CreateCursoDto) {
+    if(archivo){
+      const {file} = await this.s3.uploadFile(archivo.buffer,'uploads/cursos/'+archivo.filename+ archivo.mimetype.split('/')[1])
+      createCursoDto.imagen=file;
     }
     return this.cursosService.create(createCursoDto);
   }
@@ -44,25 +33,11 @@ export class CursosController {
   }
 
   @Patch(':id')
-  @UseInterceptors(FileInterceptor('imagen',{
-    fileFilter: function (req,file,cb){
-
-        cb(null,true)
-    },
-    storage:diskStorage({
-        destination:"./uploads/cursos",
-        filename:function(req,file,cb){
-            console.log(file);
-            
-            cb(null, Date.now() +'.'+ file.mimetype.split('/')[1])
-           // cb(null,file.originalname.split('.')[0]+'_'+Date.now()+'.'+file.originalname.split('.')[1])
-        }
-    })
-
-}))
-  update(@UploadedFile() file: Express.Multer.File, @Param('id') id: string, @Body() updateCursoDto: UpdateCursoDto) {
-    if(file){
-      updateCursoDto.imagen=file.filename;
+  @UseInterceptors(FileInterceptor('imagen'))
+  async update(@UploadedFile() archivo: Express.Multer.File, @Param('id') id: string, @Body() updateCursoDto: UpdateCursoDto) {
+    if(archivo){
+      const {file} = await this.s3.uploadFile(archivo.buffer,'uploads/cursos/'+archivo.filename+ archivo.mimetype.split('/')[1])
+      updateCursoDto.imagen=file;
     }
     return this.cursosService.update(+id, updateCursoDto);
   }

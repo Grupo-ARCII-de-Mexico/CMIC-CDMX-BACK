@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Evento } from './entities/evento.entity';
 import { ZoomService } from 'src/tools/zoom.service';
 import { UserModule } from 'src/user/user.module';
+import { S3Service } from 'src/tools/s3.service';
 
 @Module({
   imports:[
@@ -14,7 +15,7 @@ import { UserModule } from 'src/user/user.module';
     UserModule
   ],
   controllers: [EventoController],
-  providers: [EventoService,ZoomService],
+  providers: [EventoService,ZoomService, S3Service],
   exports:[TypeOrmModule,EventoService]
 })
 export class EventoModule {}

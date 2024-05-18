@@ -15,7 +15,9 @@ export class BoletinesService {
   }
 
   async findAll() {
-    return await this.repo.find();
+    const items = await this.repo.find();
+  items.sort((a, b) => b.id - a.id);
+  return items;
   }
 
   async findOne(id: string) {

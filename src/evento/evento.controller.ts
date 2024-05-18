@@ -9,36 +9,23 @@ import { diskStorage } from 'multer';
 import { FileInterceptor } from '@nestjs/platform-express/multer';
 import { ZoomService } from 'src/tools/zoom.service';
 import { AuthGuard } from '@nestjs/passport';
+import { S3Service } from 'src/tools/s3.service';
 
 
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('evento')
 export class EventoController {
-  constructor(private readonly eventoService: EventoService, private readonly zoom:ZoomService) {}
+  constructor(private readonly eventoService: EventoService, private readonly zoom:ZoomService, private s3:S3Service) {}
 
  
   @Post()
   @RoleProtected( Roles.ADMIN,Roles.GERENTE,Roles.COLABORADOR )
   @UseGuards( AuthGuard() )
-  @UseInterceptors(FileInterceptor('imagen',{
-    fileFilter: function (req,file,cb){
-
-        cb(null,true)
-    },
-    storage:diskStorage({
-        destination:"./uploads/eventos",
-        filename:function(req,file,cb){
-            console.log(file);
-            
-            cb(null, Date.now() +'.'+ file.mimetype.split('/')[1])
-           // cb(null,file.originalname.split('.')[0]+'_'+Date.now()+'.'+file.originalname.split('.')[1])
-        }
-    })
-
-}))
-  create( @UploadedFile() file: Express.Multer.File, @Body() createEventoDto: CreateEventoDto) {
-    if(file){
-      createEventoDto.imagen=file.filename;
+  @UseInterceptors(FileInterceptor('imagen'))
+  async create( @UploadedFile() archivo: Express.Multer.File, @Body() createEventoDto: CreateEventoDto) {
+    if(archivo){
+      const {file} = await this.s3.uploadFile(archivo.buffer,'uploads/eventos/'+archivo.filename+ archivo.mimetype.split('/')[1])
+      createEventoDto.imagen=file;
     }
      return this.eventoService.create(createEventoDto);
   }
@@ -58,25 +45,11 @@ export class EventoController {
   }
 
   @Patch(':id')
-  @UseInterceptors(FileInterceptor('imagen',{
-    fileFilter: function (req,file,cb){
-
-        cb(null,true)
-    },
-    storage:diskStorage({
-        destination:"./uploads/eventos",
-        filename:function(req,file,cb){
-            console.log(file);
-            
-            cb(null, Date.now() +'.'+ file.mimetype.split('/')[1])
-           // cb(null,file.originalname.split('.')[0]+'_'+Date.now()+'.'+file.originalname.split('.')[1])
-        }
-    })
-
-}))
-  update(@UploadedFile() file: Express.Multer.File,@Param('id') id: string, @Body() updateEventoDto: UpdateEventoDto) {
-    if(file){
-      updateEventoDto.imagen=file.filename;
+  @UseInterceptors(FileInterceptor('imagen'))
+  async update(@UploadedFile() archivo: Express.Multer.File,@Param('id') id: string, @Body() updateEventoDto: UpdateEventoDto) {
+    if(archivo){
+      const {file} = await this.s3.uploadFile(archivo.buffer,'uploads/eventos/'+archivo.filename+ archivo.mimetype.split('/')[1])
+      updateEventoDto.imagen=file;
     }
     return this.eventoService.update(+id, updateEventoDto);
   }
@@ -93,24 +66,9 @@ export class EventoController {
   }
 
   @Post('/ponente')
-  @UseInterceptors(FileInterceptor('imagen',{
-    fileFilter: function (req,file,cb){
-
-        cb(null,true)
-    },
-    storage:diskStorage({
-        destination:"./uploads/eventos-ponentes",
-        filename:function(req,file,cb){
-            console.log(file);
-            
-            cb(null, Date.now() +'.'+ file.mimetype.split('/')[1])
-           // cb(null,file.originalname.split('.')[0]+'_'+Date.now()+'.'+file.originalname.split('.')[1])
-        }
-    })
-
-}))
+  @UseInterceptors(FileInterceptor('imagen'))
   async ponente(@UploadedFile() file: Express.Multer.File){
-    return {file:file?.filename ?? null};
+    return await this.s3.uploadFile(file.buffer,'uploads/ponentes/'+file.filename+ file.mimetype.split('/')[1])
   }
 
 

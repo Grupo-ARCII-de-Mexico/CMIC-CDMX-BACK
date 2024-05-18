@@ -15,4 +15,8 @@ export class CreateBoletineDto {
     @IsOptional()
     @Type(() => Date)
     createdAt:Date
+    @IsOptional()
+    fecha:Date 
+    @IsOptional()
+    imagenes:string[];
 }

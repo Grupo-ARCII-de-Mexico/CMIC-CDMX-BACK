@@ -4,30 +4,19 @@ import { CreateBolsaTrabajoDto } from './dto/create-bolsa-trabajo.dto';
 import { UpdateBolsaTrabajoDto } from './dto/update-bolsa-trabajo.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { S3Service } from 'src/tools/s3.service';
 
 
 @Controller('bolsa-trabajo')
 export class BolsaTrabajoController {
-  constructor(private readonly bolsaTrabajoService: BolsaTrabajoService) {}
+  constructor(private readonly bolsaTrabajoService: BolsaTrabajoService, private readonly s3:S3Service) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('foto',{
-    fileFilter: function (req,file,cb){
-
-        cb(null,true)
-    },
-    storage:diskStorage({
-        destination:"./uploads/bolsa-trabajo-logos",
-        filename:function(req,file,cb){
-            cb(null, Date.now() +'.'+ file.mimetype.split('/')[1])
-           // cb(null,file.originalname.split('.')[0]+'_'+Date.now()+'.'+file.originalname.split('.')[1])
-        }
-    })
-
-}))
-  create(@Body() createBolsaTrabajoDto: CreateBolsaTrabajoDto, @UploadedFile() file: Express.Multer.File,) {
-    if(file){
-      createBolsaTrabajoDto.foto=file.filename;
+  @UseInterceptors(FileInterceptor('foto'))
+  async create(@Body() createBolsaTrabajoDto: CreateBolsaTrabajoDto, @UploadedFile() archivo: Express.Multer.File,) {
+    if(archivo){
+      const {file} = await this.s3.uploadFile(archivo.buffer,'uploads/bolsa-trabajo/'+archivo.filename+ archivo.mimetype.split('/')[1])
+      createBolsaTrabajoDto.foto=file;
     }
     return this.bolsaTrabajoService.create(createBolsaTrabajoDto);
   }
@@ -43,25 +32,11 @@ export class BolsaTrabajoController {
   }
 
   @Patch(':id')
-  @UseInterceptors(FileInterceptor('foto',{
-    fileFilter: function (req,file,cb){
-
-        cb(null,true)
-    },
-    storage:diskStorage({
-        destination:"./uploads/bolsa-trabajo-logos",
-        filename:function(req,file,cb){
-            console.log(file);
-            
-            cb(null, Date.now() +'.'+ file.mimetype.split('/')[1])
-           // cb(null,file.originalname.split('.')[0]+'_'+Date.now()+'.'+file.originalname.split('.')[1])
-        }
-    })
-
-}))
-  update(@Param('id') id: string, @Body() updateBolsaTrabajoDto: UpdateBolsaTrabajoDto, @UploadedFile() file: Express.Multer.File,) {
-    if(file){
-      updateBolsaTrabajoDto.foto=file.filename;
+  @UseInterceptors(FileInterceptor('foto'))
+  async update(@Param('id') id: string, @Body() updateBolsaTrabajoDto: UpdateBolsaTrabajoDto, @UploadedFile() archivo: Express.Multer.File,) {
+    if(archivo){
+      const {file} = await this.s3.uploadFile(archivo.buffer,'uploads/bolsa-trabajo/'+archivo.filename+ archivo.mimetype.split('/')[1])
+      updateBolsaTrabajoDto.foto=file;
     }
     return this.bolsaTrabajoService.update(+id, updateBolsaTrabajoDto);
   }

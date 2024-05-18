@@ -8,32 +8,19 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { CreateContactoNegocioDto, UpdateContactoNegocioDto } from './dto/create-contacto-negocio';
 import { CreateOportunidadNegocioDto, UpdateOportunidadNegocioDto } from './dto/create-oportunidad-negocio';
+import { S3Service } from 'src/tools/s3.service';
 
 @Controller('negocio')
 @UseInterceptors(ClassSerializerInterceptor)
 export class NegocioController {
-  constructor(private readonly negocioService: NegocioService) {}
+  constructor(private readonly negocioService: NegocioService, private s3: S3Service) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('logotipo',{
-    fileFilter: function (req,file,cb){
-
-        cb(null,true)
-    },
-    storage:diskStorage({
-        destination:"./uploads/oportunidades-logotipos",
-        filename:function(req,file,cb){
-            console.log(file);
-            
-            cb(null, Date.now() +'.'+ file.mimetype.split('/')[1])
-           // cb(null,file.originalname.split('.')[0]+'_'+Date.now()+'.'+file.originalname.split('.')[1])
-        }
-    })
-
-}))
-  create(@UploadedFile() file: Express.Multer.File, @Body() createNegocioDto: UpdateNegocioDto) {
-    if(file){
-      createNegocioDto.logotipo = file.filename
+  @UseInterceptors(FileInterceptor('logotipo'))
+  async create(@UploadedFile() archivo: Express.Multer.File, @Body() createNegocioDto: UpdateNegocioDto) {
+    if(archivo){
+      const {file} = await this.s3.uploadFile(archivo.buffer,'uploads/oportunidades-logotipo/'+archivo.filename+ archivo.mimetype.split('/')[1])
+      createNegocioDto.logotipo = file
     }
     createNegocioDto.documentos=[]
     return this.negocioService.create(createNegocioDto);
@@ -61,26 +48,11 @@ export class NegocioController {
   }
 
   @Post('documentos')
-  @UseInterceptors(FileInterceptor('documento',{
-    fileFilter: function (req,file,cb){
-
-        cb(null,true)
-    },
-    storage:diskStorage({
-        destination:"./uploads/oportunidades-documentos",
-        filename:function(req,file,cb){
-            console.log(file);
-            
-            cb(null, Date.now() +'.'+ file.mimetype.split('/')[1])
-           // cb(null,file.originalname.split('.')[0]+'_'+Date.now()+'.'+file.originalname.split('.')[1])
-        }
-    })
-
-}))
-  upload(
+  @UseInterceptors(FileInterceptor('documento'))
+  async upload(
     @UploadedFile() file: Express.Multer.File
   ){
-    return {file:file.filename}
+    return await this.s3.uploadFile(file.buffer,'uploads/oportunidades-documentos/'+file.filename+ file.mimetype.split('/')[1])
   }
 
   @Post('login/:id')
@@ -124,9 +96,10 @@ export class NegocioController {
     })
 
 }))
-  update(@Param('id') id: string, @UploadedFile() file: Express.Multer.File,@Body() updateNegocioDto: UpdateNegocioDto) {
-    if(file){
-      updateNegocioDto.documento = file.filename
+  async update(@Param('id') id: string, @UploadedFile() archivo: Express.Multer.File,@Body() updateNegocioDto: UpdateNegocioDto) {
+    if(archivo){
+      const {file} = await this.s3.uploadFile(archivo.buffer,'uploads/oportunidades-documento/'+archivo.filename+ archivo.mimetype.split('/')[1])
+      updateNegocioDto.documento = file
     }
     return this.negocioService.update(+id, updateNegocioDto);
   }

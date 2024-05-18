@@ -8,6 +8,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt.strategy';
 import { EmailService } from 'src/tools/nodemailer.service';
+import { S3Service } from 'src/tools/s3.service';
 
 
 @Module({
@@ -23,7 +24,7 @@ import { EmailService } from 'src/tools/nodemailer.service';
       User,
     ]),
   ],
-  providers: [UserService,JwtStrategy,EmailService],
+  providers: [UserService,JwtStrategy,EmailService, S3Service],
   controllers: [UserController],
   exports:[JwtStrategy,PassportModule,UserService,TypeOrmModule]
 })

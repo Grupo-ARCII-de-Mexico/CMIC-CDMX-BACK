@@ -4,31 +4,18 @@ import { CreateCalendarioCapacitacioneDto } from './dto/create-calendario-capaci
 import { UpdateCalendarioCapacitacioneDto } from './dto/update-calendario-capacitacione.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { S3Service } from 'src/tools/s3.service';
 
 @Controller('calendario-capacitaciones')
 export class CalendarioCapacitacionesController {
-  constructor(private readonly calendarioCapacitacionesService: CalendarioCapacitacionesService) {}
+  constructor(private readonly calendarioCapacitacionesService: CalendarioCapacitacionesService, private s3:S3Service) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('file',{
-    fileFilter: function (req,file,cb){
-
-        cb(null,true)
-    },
-    storage:diskStorage({
-        destination:"./uploads/calendarios",
-        filename:function(req,file,cb){
-            console.log(file);
-            
-            cb(null, Date.now() +'.'+ file.mimetype.split('/')[1])
-           // cb(null,file.originalname.split('.')[0]+'_'+Date.now()+'.'+file.originalname.split('.')[1])
-        }
-    })
-
-}))
-  create(@UploadedFile() file: Express.Multer.File, @Body() createCalendarioCapacitacioneDto: CreateCalendarioCapacitacioneDto) {
-    if(file){
-      createCalendarioCapacitacioneDto.archivo = file.filename;
+  @UseInterceptors(FileInterceptor('file'))
+  async create(@UploadedFile() archivo: Express.Multer.File, @Body() createCalendarioCapacitacioneDto: CreateCalendarioCapacitacioneDto) {
+    if(archivo){
+      const {file} = await this.s3.uploadFile(archivo.buffer,'uploads/bolsa-trabajo/'+archivo.filename+ archivo.mimetype.split('/')[1])
+      createCalendarioCapacitacioneDto.archivo=file;
     }
     return this.calendarioCapacitacionesService.create(createCalendarioCapacitacioneDto);
   }
@@ -44,25 +31,11 @@ export class CalendarioCapacitacionesController {
   }
 
   @Patch(':id')
-  @UseInterceptors(FileInterceptor('file',{
-    fileFilter: function (req,file,cb){
-
-        cb(null,true)
-    },
-    storage:diskStorage({
-        destination:"./uploads/calendarios",
-        filename:function(req,file,cb){
-            console.log(file);
-            
-            cb(null, Date.now() +'.'+ file.mimetype.split('/')[1])
-           // cb(null,file.originalname.split('.')[0]+'_'+Date.now()+'.'+file.originalname.split('.')[1])
-        }
-    })
-
-}))
-  update(@UploadedFile() file: Express.Multer.File,@Param('id') id: string, @Body() updateCalendarioCapacitacioneDto: UpdateCalendarioCapacitacioneDto) {
-    if(file){
-      updateCalendarioCapacitacioneDto.archivo = file.filename;
+  @UseInterceptors(FileInterceptor('file'))
+  async update(@UploadedFile() archivo: Express.Multer.File,@Param('id') id: string, @Body() updateCalendarioCapacitacioneDto: UpdateCalendarioCapacitacioneDto) {
+    if(archivo){
+      const {file} = await this.s3.uploadFile(archivo.buffer,'uploads/bolsa-trabajo/'+archivo.filename+ archivo.mimetype.split('/')[1])
+      updateCalendarioCapacitacioneDto.archivo=file;
     }
     return this.calendarioCapacitacionesService.update(+id, updateCalendarioCapacitacioneDto);
   }

@@ -3,6 +3,7 @@ import { ComentariosService } from './comentarios.service';
 import { ComentariosController } from './comentarios.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Comentario } from './entities/comentario.entity';
+import { S3Service } from 'src/tools/s3.service';
 
 @Module({
   imports:[
@@ -11,6 +12,6 @@ import { Comentario } from './entities/comentario.entity';
     ])
   ],
   controllers: [ComentariosController],
-  providers: [ComentariosService]
+  providers: [ComentariosService, S3Service]
 })
 export class ComentariosModule {}

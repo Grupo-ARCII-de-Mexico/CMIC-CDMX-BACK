@@ -4,29 +4,18 @@ import { CreateBolsaParticipanteDto } from './dto/create-bolsa-participante.dto'
 import { UpdateBolsaParticipanteDto } from './dto/update-bolsa-participante.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { S3Service } from 'src/tools/s3.service';
 
 @Controller('bolsa-participante')
 export class BolsaParticipanteController {
-  constructor(private readonly bolsaParticipanteService: BolsaParticipanteService) {}
+  constructor(private readonly bolsaParticipanteService: BolsaParticipanteService, private readonly s3:S3Service) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('curriculum',{
-    fileFilter: function (req,file,cb){
-
-        cb(null,true)
-    },
-    storage:diskStorage({
-        destination:"./uploads/bolsa-trabajo-curriculum",
-        filename:function(req,file,cb){
-            cb(null, Date.now() +'.'+ file.mimetype.split('/')[1])
-           // cb(null,file.originalname.split('.')[0]+'_'+Date.now()+'.'+file.originalname.split('.')[1])
-        }
-    })
-
-}))
-  create(@Body() createBolsaParticipanteDto: CreateBolsaParticipanteDto, @UploadedFile() file: Express.Multer.File) {
+  @UseInterceptors(FileInterceptor('curriculum'))
+  async create(@Body() createBolsaParticipanteDto: CreateBolsaParticipanteDto, @UploadedFile() file: Express.Multer.File) {
     if(file){
-      createBolsaParticipanteDto.curriculum = file.filename;
+      const r = await this.s3.uploadFile(file.buffer,'uploads/bolsa-participante/'+file.filename+ file.mimetype.split('/')[1])
+      createBolsaParticipanteDto.curriculum = r.file;
     }
     return this.bolsaParticipanteService.create(createBolsaParticipanteDto);
   }

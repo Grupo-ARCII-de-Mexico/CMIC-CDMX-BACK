@@ -4,31 +4,18 @@ import { CreateParticipanteDto } from './dto/create-participante.dto';
 import { UpdateParticipanteDto } from './dto/update-participante.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { S3Service } from 'src/tools/s3.service';
 
 @Controller('participante')
 export class ParticipanteController {
-  constructor(private readonly participanteService: ParticipanteService) {}
+  constructor(private readonly participanteService: ParticipanteService, private s3:S3Service) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('evidencia',{
-    fileFilter: function (req,file,cb){
-
-        cb(null,true)
-    },
-    storage:diskStorage({
-        destination:"./uploads/evidencia",
-        filename:function(req,file,cb){
-            console.log(file);
-            
-            cb(null, Date.now() +'.'+ file.mimetype.split('/')[1])
-           // cb(null,file.originalname.split('.')[0]+'_'+Date.now()+'.'+file.originalname.split('.')[1])
-        }
-    })
-
-}))
-  create(@UploadedFile() file: Express.Multer.File, @Body() createParticipanteDto: CreateParticipanteDto) {
-    if(file){
-      createParticipanteDto.evidencia = file.filename;
+  @UseInterceptors(FileInterceptor('evidencia'))
+  async create(@UploadedFile() archivo: Express.Multer.File, @Body() createParticipanteDto: CreateParticipanteDto) {
+    if(archivo){
+      const {file} = await this.s3.uploadFile(archivo.buffer,'uploads/evidencia/'+archivo.filename+ archivo.mimetype.split('/')[1])
+      createParticipanteDto.evidencia = file;
     }
     return this.participanteService.create(createParticipanteDto);
   }

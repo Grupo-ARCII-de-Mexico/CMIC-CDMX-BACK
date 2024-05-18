@@ -3,6 +3,7 @@ import { BoletinesService } from './boletines.service';
 import { BoletinesController } from './boletines.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Boletin } from './entities/boletine.entity';
+import { S3Service } from 'src/tools/s3.service';
 
 @Module({
   imports:[
@@ -11,6 +12,6 @@ import { Boletin } from './entities/boletine.entity';
     ])
   ],
   controllers: [BoletinesController],
-  providers: [BoletinesService]
+  providers: [BoletinesService, S3Service]
 })
 export class BoletinesModule {}

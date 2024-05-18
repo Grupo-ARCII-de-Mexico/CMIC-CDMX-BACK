@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Participante } from './entities/participante.entity';
 import { EstadosModule } from 'src/estados/estados.module';
 import { UserModule } from 'src/user/user.module';
+import { S3Service } from 'src/tools/s3.service';
 
 @Module({
   imports:[
@@ -15,7 +16,7 @@ import { UserModule } from 'src/user/user.module';
     UserModule
   ],
   controllers: [ParticipanteController],
-  providers: [ParticipanteService],
+  providers: [ParticipanteService, S3Service],
   exports:[TypeOrmModule,ParticipanteService]
 })
 export class ParticipanteModule {}

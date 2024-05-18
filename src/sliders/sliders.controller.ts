@@ -4,10 +4,13 @@ import { CreateSliderDto } from './dto/create-slider.dto';
 import { UpdateSliderDto } from './dto/update-slider.dto';
 import { diskStorage } from 'multer';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { S3Service } from 'src/tools/s3.service';
 
 @Controller('sliders')
 export class SlidersController {
-  constructor(private readonly slidersService: SlidersService) {}
+  constructor(
+    private readonly slidersService: SlidersService,
+  private readonly s3:S3Service) {}
 
   @Post()
   @UseInterceptors(FileInterceptor('imagen',{
@@ -26,9 +29,10 @@ export class SlidersController {
     })
 
 }))
-  create(@UploadedFile() file: Express.Multer.File,@Body() createSliderDto: CreateSliderDto) {
-    if(file){
-      createSliderDto.imagen=file.filename;
+  async create(@UploadedFile() archivo: Express.Multer.File,@Body() createSliderDto: CreateSliderDto) {
+    if(archivo){
+      const {file} = await this.s3.uploadFile(archivo.buffer,'uploads/sliders/'+archivo.filename+ archivo.mimetype.split('/')[1])
+      createSliderDto.imagen=file;
     }
    if(typeof(createSliderDto.blur) === 'string'){
         if(createSliderDto.blur === 'false'){
@@ -51,25 +55,11 @@ export class SlidersController {
   }
 
   @Patch(':id')
-  @UseInterceptors(FileInterceptor('imagen',{
-    fileFilter: function (req,file,cb){
-
-        cb(null,true)
-    },
-    storage:diskStorage({
-        destination:"./uploads/sliders",
-        filename:function(req,file,cb){
-            console.log(file);
-            
-            cb(null, Date.now() +'.'+ file.mimetype.split('/')[1])
-           // cb(null,file.originalname.split('.')[0]+'_'+Date.now()+'.'+file.originalname.split('.')[1])
-        }
-    })
-
-}))
-  update(@UploadedFile() file: Express.Multer.File,@Param('id') id: string, @Body() updateSliderDto: UpdateSliderDto) {
-    if(file){
-      updateSliderDto.imagen=file.filename;
+  @UseInterceptors(FileInterceptor('imagen'))
+  async update(@UploadedFile() archivo: Express.Multer.File,@Param('id') id: string, @Body() updateSliderDto: UpdateSliderDto) {
+    if(archivo){
+      const {file} = await this.s3.uploadFile(archivo.buffer,'uploads/sliders/'+archivo.filename+ archivo.mimetype.split('/')[1])
+      updateSliderDto.imagen=file;
     }
     return this.slidersService.update(+id, updateSliderDto);
   }

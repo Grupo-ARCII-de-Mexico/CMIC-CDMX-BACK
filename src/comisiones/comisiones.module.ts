@@ -3,6 +3,7 @@ import { ComisionesService } from './comisiones.service';
 import { ComisionesController } from './comisiones.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Comision } from './entities/comisione.entity';
+import { S3Service } from 'src/tools/s3.service';
 
 @Module({
   imports:[
@@ -11,6 +12,6 @@ import { Comision } from './entities/comisione.entity';
     ])
   ],
   controllers: [ComisionesController],
-  providers: [ComisionesService]
+  providers: [ComisionesService, S3Service]
 })
 export class ComisionesModule {}

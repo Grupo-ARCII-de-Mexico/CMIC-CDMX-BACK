@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BolsaParticipante } from './entities/bolsa-participante.entity';
 import { BolsaTrabajoModule } from 'src/bolsa-trabajo/bolsa-trabajo.module';
 import { EmailService } from 'src/tools/nodemailer.service';
+import { S3Service } from 'src/tools/s3.service';
 
 @Module({
   imports:[
@@ -12,6 +13,6 @@ import { EmailService } from 'src/tools/nodemailer.service';
     BolsaTrabajoModule
   ],
   controllers: [BolsaParticipanteController],
-  providers: [BolsaParticipanteService, EmailService]
+  providers: [BolsaParticipanteService, EmailService, S3Service]
 })
 export class BolsaParticipanteModule {}
