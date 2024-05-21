@@ -16,6 +16,6 @@ export class Boletin extends EntityBase{
     identificador:string;
     @Column({default:new Date()})
     fecha:Date;
-    @Column({type:'simple-array'})
+    @Column({type:'simple-array',nullable:true})
     imagenes:string[];
 }

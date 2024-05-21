@@ -14,6 +14,6 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({
     whitelist:true
   }));
-  await app.listen(3003);
+  await app.listen(process.env.PORT || 3003);
 }
 bootstrap();

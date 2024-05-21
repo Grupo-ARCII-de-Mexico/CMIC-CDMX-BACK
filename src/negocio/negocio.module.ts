@@ -6,6 +6,7 @@ import { Negocio } from './entities/negocio.entity';
 import { ContactoNegocio } from './entities/contacto-negocio.entity';
 import { OportunidadNegocio } from './entities/oportunidad-negocio.entity';
 import { EmailService } from 'src/tools/nodemailer.service';
+import { S3Service } from 'src/tools/s3.service';
 
 @Module({
   imports:[
@@ -16,6 +17,6 @@ import { EmailService } from 'src/tools/nodemailer.service';
     ])
   ],
   controllers: [NegocioController],
-  providers: [NegocioService,EmailService]
+  providers: [NegocioService,EmailService,S3Service]
 })
 export class NegocioModule {}
